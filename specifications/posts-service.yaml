@@ -1,0 +1,461 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Posts service
+  description: Posts service
+paths:
+  "/posts":
+    get:
+      tags:
+        - Posts service
+      operationId: getAllPosts
+      summary: Получение всех постов
+      parameters:
+        - $ref: "#/components/parameters/Size"
+        - $ref: "#/components/parameters/Page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetPostsResponse"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+    post:
+      tags:
+        - Posts service
+      operationId: createNewPost
+      summary: Создание нового поста
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePostRequest"
+      responses:
+        "200":
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                format: uuid
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+  "/posts/{postId}":
+    get:
+      tags:
+        - Posts service
+      summary: Получение поста по идентификатору
+      operationId: getPostById
+      parameters:
+        - $ref: "#/components/parameters/PostId"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+    delete:
+      tags:
+        - Posts service
+      summary: Удаление поста по идентификатору
+      operationId: deletePostById
+      parameters:
+        - $ref: "#/components/parameters/PostId"
+      responses:
+        "204":
+          description: Success
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+  "/posts/{postId}/likes/{profileId}":
+    put:
+      tags:
+        - Posts service
+      summary: Добавление лайка к посту
+      operationId: putLikeToPost
+      parameters:
+        - $ref: "#/components/parameters/PostId"
+        - $ref: "#/components/parameters/ProfileId"
+      responses:
+        "204":
+          description: Success
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+    delete:
+      tags:
+        - Posts service
+      summary: Удаление лайка с поста
+      operationId: deleteLikeFromPost
+      parameters:
+        - $ref: "#/components/parameters/PostId"
+        - $ref: "#/components/parameters/ProfileId"
+      responses:
+        "204":
+          description: Success
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+  "/posts/{postId}/comments":
+    get:
+      tags:
+        - Posts service
+      operationId: getPostComments
+      summary: Получение комментариев поста
+      parameters:
+        - $ref: "#/components/parameters/PostId"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comment"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+    post:
+      tags:
+        - Posts service
+      operationId: createNewComment
+      summary: Создание нового комментария
+      parameters:
+        - $ref: "#/components/parameters/PostId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentRequest"
+      responses:
+        "200":
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                format: uuid
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+  "/comments/{commentId}":
+    delete:
+      tags:
+        - Posts service
+      summary: Удаление комментария по идентификатору
+      operationId: deleteCommentById
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      responses:
+        "204":
+          description: Success
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+  "/comments/{commentId}/likes/{profileId}":
+    put:
+      tags:
+        - Posts service
+      summary: Добавление лайка к комментарию
+      operationId: putLikeToComment
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+        - $ref: "#/components/parameters/ProfileId"
+      responses:
+        "204":
+          description: Success
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+    delete:
+      tags:
+        - Posts service
+      summary: Удаление лайка с комментария
+      operationId: deleteLikeFromComment
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+        - $ref: "#/components/parameters/ProfileId"
+      responses:
+        "204":
+          description: Success
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+  "/comments/{commentId}/subcomments":
+    post:
+      tags:
+        - Posts service
+      operationId: createNewSubComment
+      summary: Создание нового дочерного комментария
+      parameters:
+        - $ref: "#/components/parameters/CommentId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCommentRequest"
+      responses:
+        "200":
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                format: uuid
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+components:
+  parameters:
+    PostId:
+      in: path
+      name: postId
+      description: Идентификатор поста
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CommentId:
+      in: path
+      name: commentId
+      description: Идентификатор комментария
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProfileId:
+      in: path
+      name: profileId
+      description: Идентификатор пользователя
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Size:
+      in: query
+      name: size
+      description: Количество элементов на странице
+      required: false
+      schema:
+        type: integer
+        default: 10
+    Page:
+      in: query
+      name: page
+      description: Номер страницы
+      required: false
+      schema:
+        type: integer
+  responses:
+    NotFound:
+      description: Not NotFound
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            status: 404
+            type: ResourceNotFound
+            code: 1404
+            message: Resouce not found.
+    MethodNotAllowed:
+      description: Method Not Allowed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            status: 405
+            type: MethodNotAllowed
+            code: 4005
+            message: Method Not Allowed
+    UnprocessableEntity:
+      description: Unprocessable entity
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            status: 422
+            type: ValidationError
+            code: 1300
+            message: Validation failed for one or more fields in the requests.
+    SystemServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            status: 500
+            type: SystemError
+            code: 9000
+            message: Internal server error.
+  schemas:
+    CreatePostRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Содержание поста
+        isVisible:
+          type: boolean
+          default: true
+          description: Могут ли другие пользователи видеть этот пост
+    CreateCommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Содержание комментария
+    GetPostsResponse:
+      type: object
+      properties:
+        pageIndex:
+          type: integer
+          description: Номер страницы
+        totalPages:
+          type: integer
+          description: Общее количество доступных страниц
+        totalCount:
+          type: integer
+          description: Общее количество доступных постов
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Post"
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор поста
+        content:
+          type: string
+          description: Содержание поста
+        isVisible:
+          type: boolean
+          description: Могут ли другие пользователи видеть этот пост
+        likes:
+          type: integer
+          description: Количество лайков
+        comments:
+          type: integer
+          description: Количество комментариев
+        createdBy:
+          $ref: "#/components/schemas/CreatedBy"
+          description: Данные создателя
+        createdAt:
+          type: string
+          format: date
+          description: Дата создания поста
+        hasLikeFromCurrentUser:
+          type: boolean
+          description: Текущий пользователь добавил лайк посту
+    CreatedBy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор пользователя
+        name:
+          type: string
+          description: Имя пользователя
+        photoUrl:
+          type: string
+          description: Ссылка на фотографию пользователя
+    CommentBase:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Идентификатор комментария
+        content:
+          type: string
+          description: Содержание комментария
+        likes:
+          type: integer
+          description: Количество лайков
+        createdBy:
+          $ref: "#/components/schemas/CreatedBy"
+          description: Данные создателя
+        createdAt:
+          type: string
+          format: date
+          description: Дата создания поста
+        hasLikeFromCurrentUser:
+          type: boolean
+          description: Текущий пользователь добавил лайк комментарию
+    Comment:
+      allOf:
+        - $ref: "#/components/schemas/CommentBase"
+      type: object
+      properties:
+        subComments:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubComment"
+    SubComment:
+      allOf:
+        - $ref: "#/components/schemas/CommentBase"
+    Error:
+      title: Error
+      type: object
+      properties:
+        status:
+          type: integer
+        type:
+          type: string
+        code:
+          type: integer
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorDetails"
+    ErrorDetails:
+      title: Error details
+      type: object
+      properties:
+        type:
+          type: string
+        code:
+          type: integer
+        message:
+          type: string
+        target:
+          type: string

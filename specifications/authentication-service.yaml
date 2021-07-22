@@ -1,0 +1,166 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Authentication service
+  description: Authentication service
+paths:
+  "/login/email":
+    post:
+      tags:
+        - Authentication service
+      operationId: emailLogin
+      summary: Аутентификация с помощью email и пароля
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailLoginRequest"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+  "/login/google":
+    post:
+      tags:
+        - Authentication service
+      operationId: googleLogin
+      summary: Аутентификация с помощью токена
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoogleLoginRequest"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+  "/login/facebook":
+    post:
+      tags:
+        - Authentication service
+      operationId: facebookLogin
+      summary: Аутентификация с помощью токена
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FacebookLoginRequest"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+  "/refreshtoken":
+    post:
+      tags:
+        - Authentication service
+      operationId: refreshToken
+      summary: Обновление access и refresh токенов
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshTokenRequest"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+components:
+  responses:
+    SystemServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            status: 500
+            type: SystemError
+            code: 9000
+            message: Internal server error.
+  schemas:
+    EmailLoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    GoogleLoginRequest:
+      type: object
+      properties:
+        token:
+          type: string
+    FacebookLoginRequest:
+      type: object
+      properties:
+        token:
+          type: string
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiresAt:
+          type: string
+          format: date
+        refreshToken:
+          type: string
+    RefreshTokenRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+    Error:
+      title: Error
+      type: object
+      properties:
+        status:
+          type: integer
+        type:
+          type: string
+        code:
+          type: integer
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorDetails"
+    ErrorDetails:
+      title: Error details
+      type: object
+      properties:
+        type:
+          type: string
+        code:
+          type: integer
+        message:
+          type: string
+        target:
+          type: string

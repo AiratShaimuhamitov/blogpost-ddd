@@ -1,0 +1,107 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Articles service
+  description: Articles service
+paths:
+  "/articles":
+    get:
+      tags:
+        - Articles service
+      operationId: getArticles
+      summary: Получение статей
+      parameters:
+        - $ref: "#/components/parameters/Size"
+        - $ref: "#/components/parameters/Page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetArticlesResponse"
+        "500":
+          $ref: "#/components/responses/SystemServerError"
+components:
+  parameters:
+    Size:
+      in: query
+      name: size
+      description: Количество постов на странице
+      required: false
+      schema:
+        type: integer
+        default: 10
+    Page:
+      in: query
+      name: page
+      description: Номер страницы
+      required: false
+      schema:
+        type: integer
+  responses:
+    SystemServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            status: 500
+            type: SystemError
+            code: 9000
+            message: Internal server error.
+  schemas:
+    Article:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Название статьи
+        content:
+          type: string
+          description: Содержание статьи (на данный момент ссылка на telegraph)
+    GetArticlesResponse:
+      type: object
+      properties:
+        pageIndex:
+          type: integer
+          description: Номер страницы
+        totalPages:
+          type: integer
+          description: Общее количество доступных страниц
+        totalCount:
+          type: integer
+          description: Общее количество доступных статей
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Article"
+    Error:
+      title: Error
+      type: object
+      properties:
+        status:
+          type: integer
+        type:
+          type: string
+        code:
+          type: integer
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/ErrorDetails"
+    ErrorDetails:
+      title: Error details
+      type: object
+      properties:
+        type:
+          type: string
+        code:
+          type: integer
+        message:
+          type: string
+        target:
+          type: string
