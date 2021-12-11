@@ -18,53 +18,52 @@ using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
-namespace Blogpost.WebApi.Models
+namespace Blogpost.WebApi.Models;
+
+/// <summary>
+///
+/// </summary>
+[DataContract]
+public partial class CommentBase
 {
     /// <summary>
-    ///
+    /// Идентификатор комментария
     /// </summary>
-    [DataContract]
-    public partial class CommentBase
-    {
-        /// <summary>
-        /// Идентификатор комментария
-        /// </summary>
-        /// <value>Идентификатор комментария</value>
-        [DataMember(Name = "id")]
-        public Guid? Id { get; set; }
+    /// <value>Идентификатор комментария</value>
+    [DataMember(Name = "id")]
+    public Guid? Id { get; set; }
 
-        /// <summary>
-        /// Содержание комментария
-        /// </summary>
-        /// <value>Содержание комментария</value>
-        [DataMember(Name = "content")]
-        public string Content { get; set; }
+    /// <summary>
+    /// Содержание комментария
+    /// </summary>
+    /// <value>Содержание комментария</value>
+    [DataMember(Name = "content")]
+    public string Content { get; set; }
 
-        /// <summary>
-        /// Количество лайков
-        /// </summary>
-        /// <value>Количество лайков</value>
-        [DataMember(Name = "likes")]
-        public int? Likes { get; set; }
+    /// <summary>
+    /// Количество лайков
+    /// </summary>
+    /// <value>Количество лайков</value>
+    [DataMember(Name = "likes")]
+    public int? Likes { get; set; }
 
-        /// <summary>
-        /// Gets or Sets CreatedBy
-        /// </summary>
-        [DataMember(Name = "createdBy")]
-        public CreatedBy CreatedBy { get; set; }
+    /// <summary>
+    /// Gets or Sets CreatedBy
+    /// </summary>
+    [DataMember(Name = "createdBy")]
+    public CreatedBy CreatedBy { get; set; }
 
-        /// <summary>
-        /// Дата создания поста
-        /// </summary>
-        /// <value>Дата создания поста</value>
-        [DataMember(Name = "createdAt")]
-        public DateTime? CreatedAt { get; set; }
+    /// <summary>
+    /// Дата создания поста
+    /// </summary>
+    /// <value>Дата создания поста</value>
+    [DataMember(Name = "createdAt")]
+    public DateTime? CreatedAt { get; set; }
 
-        /// <summary>
-        /// Текущий пользователь добавил лайк комментарию
-        /// </summary>
-        /// <value>Текущий пользователь добавил лайк комментарию</value>
-        [DataMember(Name = "hasLikeFromCurrentUser")]
-        public bool HasLikeFromCurrentUser { get; set; }
-    }
+    /// <summary>
+    /// Текущий пользователь добавил лайк комментарию
+    /// </summary>
+    /// <value>Текущий пользователь добавил лайк комментарию</value>
+    [DataMember(Name = "hasLikeFromCurrentUser")]
+    public bool HasLikeFromCurrentUser { get; set; }
 }

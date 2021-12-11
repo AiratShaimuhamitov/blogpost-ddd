@@ -5,33 +5,32 @@ using MediatR;
 using Blogpost.Application.Repositories;
 using Blogpost.Domain.Entities;
 
-namespace Blogpost.Application.Profiles.Commands.Create
+namespace Blogpost.Application.Profiles.Commands.Create;
+
+public class CreateProfileCommand : IRequest<Guid>
 {
-    public class CreateProfileCommand : IRequest<Guid>
+    public string Name { get; init; }
+
+    public string Email { get; init; }
+
+    public string Password { get; init; }
+
+    public class CreateProfileCommandHandler : IRequestHandler<CreateProfileCommand, Guid>
     {
-        public string Name { get; init; }
+        private readonly ProfilesRepository _profilesRepository;
 
-        public string Email { get; init; }
-
-        public string Password { get; init; }
-
-        public class CreateProfileCommandHandler : IRequestHandler<CreateProfileCommand, Guid>
+        public CreateProfileCommandHandler(ProfilesRepository profilesRepository)
         {
-            private readonly ProfilesRepository _profilesRepository;
+            _profilesRepository = profilesRepository;
+        }
 
-            public CreateProfileCommandHandler(ProfilesRepository profilesRepository)
-            {
-                _profilesRepository = profilesRepository;
-            }
+        public async Task<Guid> Handle(CreateProfileCommand request, CancellationToken cancellationToken)
+        {
+            var profile = new Profile(Guid.NewGuid(), request.Name, request.Email);
 
-            public async Task<Guid> Handle(CreateProfileCommand request, CancellationToken cancellationToken)
-            {
-                var profile = new Profile(Guid.NewGuid(), request.Name, request.Email);
+            await _profilesRepository.Add(profile, request.Password, cancellationToken);
 
-                await _profilesRepository.Add(profile, request.Password, cancellationToken);
-
-                return profile.Id;
-            }
+            return profile.Id;
         }
     }
 }

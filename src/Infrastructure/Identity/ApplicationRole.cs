@@ -1,9 +1,8 @@
 using System;
 using Microsoft.AspNetCore.Identity;
 
-namespace Blogpost.Infrastructure.Identity
+namespace Blogpost.Infrastructure.Identity;
+
+public class ApplicationRole : IdentityRole<Guid>
 {
-    public class ApplicationRole : IdentityRole<Guid>
-    {
-    }
 }

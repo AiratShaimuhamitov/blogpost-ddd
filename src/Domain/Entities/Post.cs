@@ -1,50 +1,49 @@
 using System;
 using System.Collections.Generic;
 
-namespace Blogpost.Domain.Entities
+namespace Blogpost.Domain.Entities;
+
+/// <summary>
+/// Post - aggregate root
+/// </summary>
+public class Post : FeedItem<Guid>
 {
-    /// <summary>
-    /// Post - aggregate root
-    /// </summary>
-    public class Post : FeedItem<Guid>
+    public string Content { get; private set; }
+
+    public bool IsVisible { get; private set; }
+
+    private readonly List<Comment> _comments = new();
+    public virtual IReadOnlyList<Comment> Comments => _comments;
+
+    protected Post()
     {
-        public string Content { get; private set; }
+    }
 
-        public bool IsVisible { get; private set; }
+    public Post(string content, bool isVisible = true)
+    {
+        Content = content;
+        IsVisible = isVisible;
+    }
 
-        private readonly List<Comment> _comments = new();
-        public virtual IReadOnlyList<Comment> Comments => _comments;
+    public Comment AddComment(string content)
+    {
+        var comment = new Comment(content);
+        _comments.Add(comment);
 
-        protected Post()
-        {
-        }
+        return comment;
+    }
 
-        public Post(string content, bool isVisible = true)
-        {
-            Content = content;
-            IsVisible = isVisible;
-        }
+    public void MakeVisible()
+    {
+        if (IsVisible) throw new InvalidOperationException("The post is already visible");
 
-        public Comment AddComment(string content)
-        {
-            var comment = new Comment(content);
-            _comments.Add(comment);
+        IsVisible = true;
+    }
 
-            return comment;
-        }
+    public void MakeInvisible()
+    {
+        if (!IsVisible) throw new InvalidOperationException("The post is already invisible");
 
-        public void MakeVisible()
-        {
-            if (IsVisible) throw new InvalidOperationException("The post is already visible");
-
-            IsVisible = true;
-        }
-
-        public void MakeInvisible()
-        {
-            if (!IsVisible) throw new InvalidOperationException("The post is already invisible");
-
-            IsVisible = false;
-        }
+        IsVisible = false;
     }
 }

@@ -19,199 +19,199 @@ using Blogpost.Application.Profiles.Queries.GetMyProfile;
 using Blogpost.Application.Profiles.Queries.GetProfileById;
 using Blogpost.Application.Profiles.Queries.GetSubscribers;
 using Blogpost.Application.Profiles.Queries.GetSubscriptions;
+using Blogpost.Application.Profiles.Queries.Models;
 using Blogpost.WebApi.Attributes;
 using Blogpost.WebApi.Models;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace Blogpost.WebApi.Controllers
+namespace Blogpost.WebApi.Controllers;
+
+[Authorize]
+public class ProfilesController : ApiControllerBase
 {
-    [Authorize]
-    public class ProfilesController : ApiControllerBase
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IMapper _mapper;
+
+    public ProfilesController(ICurrentUserService currentUserService, IMapper mapper)
     {
-        private readonly ICurrentUserService _currentUserService;
-        private readonly IMapper _mapper;
+        _currentUserService = currentUserService;
+        _mapper = mapper;
+    }
 
-        public ProfilesController(ICurrentUserService currentUserService, IMapper mapper)
+    /// <summary>
+    /// Получение текущего пользователя
+    /// </summary>
+    [HttpGet]
+    [Route("my")]
+    [ValidateModelState]
+    [SwaggerOperation("GetMyProfile")]
+    [SwaggerResponse(statusCode: 200, type: typeof(MyProfile), description: "Success")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<IActionResult> GetMyProfile(CancellationToken cancellationToken = default)
+    {
+        MyProfileDto profile = await Mediator.Send(new GetMyProfileQuery(), cancellationToken);
+
+        return Ok(_mapper.Map<MyProfile>(profile));
+    }
+
+    /// <summary>
+    /// Получение пользователя по идентификатору
+    /// </summary>
+    [HttpGet]
+    [Route("{profileId:guid}")]
+    [ValidateModelState]
+    [SwaggerOperation("GetProfileById")]
+    [SwaggerResponse(statusCode: 200, type: typeof(UserProfile), description: "Success")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<IActionResult> GetProfileById([FromRoute][Required] Guid? profileId, CancellationToken cancellationToken = default)
+    {
+        ProfileDto profile = await Mediator.Send(new GetProfileByIdQuery { ProfileId = profileId!.Value }, cancellationToken);
+
+        return Ok(_mapper.Map<UserProfile>(profile));
+    }
+
+    /// <summary>
+    /// Удаление текущего пользователя
+    /// </summary>
+    [HttpDelete]
+    [Route("my")]
+    [ValidateModelState]
+    [SwaggerOperation("DeleteMyProfile")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<IActionResult> DeleteMyProfile(CancellationToken cancellationToken = default)
+    {
+        Guid profileId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
+        await Mediator.Send(new DeleteProfileCommand { ProfileId = profileId }, cancellationToken);
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Создание профиля
+    /// </summary>
+    /// <param name="body"></param>
+    [HttpPost]
+    [ValidateModelState]
+    [AllowAnonymous]
+    [SwaggerOperation("register")]
+    public async Task<IActionResult> SignUp([FromBody] RegisterRequest body, CancellationToken cancellationToken = default)
+    {
+        Guid profileId = await Mediator.Send(new CreateProfileCommand
         {
-            _currentUserService = currentUserService;
-            _mapper = mapper;
-        }
+            Name = body.Name,
+            Email = body.Email,
+            Password = body.Password
+        }, cancellationToken);
 
-        /// <summary>
-        /// Получение текущего пользователя
-        /// </summary>
-        [HttpGet]
-        [Route("my")]
-        [ValidateModelState]
-        [SwaggerOperation("GetMyProfile")]
-        [SwaggerResponse(statusCode: 200, type: typeof(MyProfile), description: "Success")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<IActionResult> GetMyProfile(CancellationToken cancellationToken = default)
-        {
-            var profile = await Mediator.Send(new GetMyProfileQuery(), cancellationToken);
+        return Ok(profileId);
+    }
 
-            return Ok(_mapper.Map<MyProfile>(profile));
-        }
+    /// <summary>
+    /// Подписка на другого пользователя
+    /// </summary>
+    /// <param name="body"></param>
+    [HttpPut]
+    [Route("my/subscriptions")]
+    [ValidateModelState]
+    [SwaggerOperation("SubscribeToProfile")]
+    [SwaggerResponse(statusCode: 204, "Success")]
+    [SwaggerResponse(statusCode: 409, type: typeof(Error), description: "Business logic error")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<IActionResult> SubscribeToProfile([FromBody] SubscribeRequest body, CancellationToken cancellationToken = default)
+    {
+        Guid userId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
 
-        /// <summary>
-        /// Получение пользователя по идентификатору
-        /// </summary>
-        [HttpGet]
-        [Route("{profileId:guid}")]
-        [ValidateModelState]
-        [SwaggerOperation("GetProfileById")]
-        [SwaggerResponse(statusCode: 200, type: typeof(UserProfile), description: "Success")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<IActionResult> GetProfileById([FromRoute][Required] Guid? profileId, CancellationToken cancellationToken = default)
-        {
-            var profile = await Mediator.Send(new GetProfileByIdQuery { ProfileId = profileId!.Value }, cancellationToken);
+        await Mediator.Send(new SubscribeCommand { SubscriberId = userId, ToProfileId = body.ToProfileId }, cancellationToken);
 
-            return Ok(_mapper.Map<UserProfile>(profile));
-        }
+        return NoContent();
+    }
 
-        /// <summary>
-        /// Удаление текущего пользователя
-        /// </summary>
-        [HttpDelete]
-        [Route("my")]
-        [ValidateModelState]
-        [SwaggerOperation("DeleteMyProfile")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<IActionResult> DeleteMyProfile(CancellationToken cancellationToken = default)
-        {
-            var profileId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
-            await Mediator.Send(new DeleteProfileCommand { ProfileId = profileId }, cancellationToken);
+    /// <summary>
+    /// Удаление подписки
+    /// </summary>
+    /// <param name="profileId">Идентификатор пользователя</param>
+    [HttpDelete]
+    [Route("my/subscriptions/{profileId:guid}")]
+    [ValidateModelState]
+    [SwaggerOperation("UnsubscribeFromProfile")]
+    [SwaggerResponse(statusCode: 204, "Success")]
+    [SwaggerResponse(statusCode: 409, type: typeof(Error), description: "Business logic error")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<IActionResult> UnsubscribeFromProfile([FromRoute][Required] Guid? profileId, CancellationToken cancellationToken = default)
+    {
+        Guid userId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
 
-            return NoContent();
-        }
+        await Mediator.Send(new UnsubscribeCommand { SubscriberId = userId, FromProfileId = profileId!.Value }, cancellationToken);
 
-        /// <summary>
-        /// Создание профиля
-        /// </summary>
-        /// <param name="body"></param>
-        [HttpPost]
-        [ValidateModelState]
-        [AllowAnonymous]
-        [SwaggerOperation("register")]
-        public async Task<IActionResult> SignUp([FromBody] RegisterRequest body, CancellationToken cancellationToken = default)
-        {
-            var profileId = await Mediator.Send(new CreateProfileCommand
-            {
-                Name = body.Name,
-                Email = body.Email,
-                Password = body.Password
-            }, cancellationToken);
+        return NoContent();
+    }
 
-            return Ok(profileId);
-        }
+    /// <summary>
+    /// Получение моих подписчиков
+    /// </summary>
+    [HttpGet]
+    [Route("my/subscribers")]
+    [ValidateModelState]
+    [SwaggerOperation("GetMySubscribers")]
+    [SwaggerResponse(statusCode: 200, type: typeof(List<Subscriber>), description: "Success")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<ActionResult> GetMySubscribers(CancellationToken cancellationToken = default)
+    {
+        Guid userId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
 
-        /// <summary>
-        /// Подписка на другого пользователя
-        /// </summary>
-        /// <param name="body"></param>
-        [HttpPut]
-        [Route("my/subscriptions")]
-        [ValidateModelState]
-        [SwaggerOperation("SubscribeToProfile")]
-        [SwaggerResponse(statusCode: 204, "Success")]
-        [SwaggerResponse(statusCode: 409, type: typeof(Error), description: "Business logic error")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<IActionResult> SubscribeToProfile([FromBody] SubscribeRequest body, CancellationToken cancellationToken = default)
-        {
-            var userId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
+        var subscribers = await Mediator.Send(new GetSubscribersQuery { ProfileId = userId }, cancellationToken);
+        return Ok(_mapper.Map<List<Subscriber>>(subscribers));
+    }
 
-            await Mediator.Send(new SubscribeCommand { SubscriberId = userId, ToProfileId = body.ToProfileId }, cancellationToken);
+    /// <summary>
+    /// Получение моих подписок
+    /// </summary>
+    [HttpGet]
+    [Route("my/subscriptions")]
+    [ValidateModelState]
+    [SwaggerOperation("GetMySubscriptions")]
+    [SwaggerResponse(statusCode: 200, type: typeof(List<Subscription>), description: "Success")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<ActionResult> GetMySubscriptions(CancellationToken cancellationToken = default)
+    {
+        Guid userId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
 
-            return NoContent();
-        }
+        var subscriptions = await Mediator.Send(new GetSubscriptionsQuery { ProfileId = userId }, cancellationToken);
+        return Ok(_mapper.Map<List<Subscription>>(subscriptions));
+    }
 
-        /// <summary>
-        /// Удаление подписки
-        /// </summary>
-        /// <param name="profileId">Идентификатор пользователя</param>
-        [HttpDelete]
-        [Route("my/subscriptions/{profileId:guid}")]
-        [ValidateModelState]
-        [SwaggerOperation("UnsubscribeFromProfile")]
-        [SwaggerResponse(statusCode: 204, "Success")]
-        [SwaggerResponse(statusCode: 409, type: typeof(Error), description: "Business logic error")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<IActionResult> UnsubscribeFromProfile([FromRoute][Required] Guid? profileId, CancellationToken cancellationToken = default)
-        {
-            var userId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
+    /// <summary>
+    /// Получение постов подписок
+    /// </summary>
+    [HttpGet]
+    [Route("my/subscriptions/posts")]
+    [ValidateModelState]
+    [SwaggerOperation("GetSubscriptionsPosts")]
+    [SwaggerResponse(statusCode: 200, type: typeof(List<GetPostsResponse>), description: "Success")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<ActionResult> GetSubscriptionsPosts([FromQuery] int size = 10, [FromQuery] int page = 1, CancellationToken cancellationToken = default)
+    {
+        Guid userId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
 
-            await Mediator.Send(new UnsubscribeCommand { SubscriberId = userId, FromProfileId = profileId!.Value }, cancellationToken);
-
-            return NoContent();
-        }
-
-        /// <summary>
-        /// Получение моих подписчиков
-        /// </summary>
-        [HttpGet]
-        [Route("my/subscribers")]
-        [ValidateModelState]
-        [SwaggerOperation("GetMySubscribers")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<Subscriber>), description: "Success")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<ActionResult> GetMySubscribers(CancellationToken cancellationToken = default)
-        {
-            var userId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
-
-            var subscribers = await Mediator.Send(new GetSubscribersQuery { ProfileId = userId }, cancellationToken);
-            return Ok(_mapper.Map<List<Subscriber>>(subscribers));
-        }
-
-        /// <summary>
-        /// Получение моих подписок
-        /// </summary>
-        [HttpGet]
-        [Route("my/subscriptions")]
-        [ValidateModelState]
-        [SwaggerOperation("GetMySubscriptions")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<Subscription>), description: "Success")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<ActionResult> GetMySubscriptions(CancellationToken cancellationToken = default)
-        {
-            var userId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
-
-            var subscriptions = await Mediator.Send(new GetSubscriptionsQuery { ProfileId = userId }, cancellationToken);
-            return Ok(_mapper.Map<List<Subscription>>(subscriptions));
-        }
-
-        /// <summary>
-        /// Получение постов подписок
-        /// </summary>
-        [HttpGet]
-        [Route("my/subscriptions/posts")]
-        [ValidateModelState]
-        [SwaggerOperation("GetSubscriptionsPosts")]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<GetPostsResponse>), description: "Success")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<ActionResult> GetSubscriptionsPosts([FromQuery] int size = 10, [FromQuery] int page = 1, CancellationToken cancellationToken = default)
-        {
-            var userId = _currentUserService.UserId ?? throw new InvalidOperationException("Current userId is null");
-
-            var result = await Mediator.Send(new GetSubscriptionsPostsWithPaginationQuery { ProfileId = userId, PageSize = size, PageNumber = page }, cancellationToken);
-            return Ok(_mapper.Map<GetPostsResponse>(result));
-        }
+        var result = await Mediator.Send(new GetSubscriptionsPostsWithPaginationQuery { ProfileId = userId, PageSize = size, PageNumber = page }, cancellationToken);
+        return Ok(_mapper.Map<GetPostsResponse>(result));
+    }
 
 
-        /// <summary>
-        /// Получение постов текущего пользователя
-        /// </summary>
-        [HttpGet]
-        [Route("my/posts")]
-        [ValidateModelState]
-        [SwaggerOperation("GetMyPosts")]
-        [SwaggerResponse(statusCode: 200, type: typeof(GetPostsResponse), description: "Success")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<IActionResult> GetMyPosts([FromQuery] int size = 10, [FromQuery] int page = 1, [FromQuery] bool isVisible = true, CancellationToken cancellationToken = default)
-        {
-            var result = await Mediator.Send(
-                new GetMyPostsWithPaginationQuery { PageSize = size, PageNumber = page, IsVisible = isVisible }, cancellationToken);
+    /// <summary>
+    /// Получение постов текущего пользователя
+    /// </summary>
+    [HttpGet]
+    [Route("my/posts")]
+    [ValidateModelState]
+    [SwaggerOperation("GetMyPosts")]
+    [SwaggerResponse(statusCode: 200, type: typeof(GetPostsResponse), description: "Success")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<IActionResult> GetMyPosts([FromQuery] int size = 10, [FromQuery] int page = 1, [FromQuery] bool isVisible = true, CancellationToken cancellationToken = default)
+    {
+        var result = await Mediator.Send(
+            new GetMyPostsWithPaginationQuery { PageSize = size, PageNumber = page, IsVisible = isVisible }, cancellationToken);
 
-            return Ok(_mapper.Map<GetPostsResponse>(result));
-        }
+        return Ok(_mapper.Map<GetPostsResponse>(result));
     }
 }

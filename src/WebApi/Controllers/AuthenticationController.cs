@@ -8,103 +8,102 @@ using Blogpost.WebApi.Attributes;
 using Blogpost.WebApi.Models;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace Blogpost.WebApi.Controllers
+namespace Blogpost.WebApi.Controllers;
+
+[ApiController]
+[Route("api/auth")]
+public class AuthenticationController : ControllerBase
 {
-    [ApiController]
-    [Route("api/auth")]
-    public class AuthenticationController : ControllerBase
+    private readonly IAuthenticationService _authenticationService;
+
+    public AuthenticationController(IAuthenticationService authenticationService)
     {
-        private readonly IAuthenticationService _authenticationService;
+        _authenticationService = authenticationService;
+    }
 
-        public AuthenticationController(IAuthenticationService authenticationService)
+    /// <summary>
+    /// Аутентификация с помощью email и пароля
+    /// </summary>
+    [HttpPost]
+    [Route("login/email")]
+    [ValidateModelState]
+    [SwaggerOperation("EmailLogin")]
+    [SwaggerResponse(statusCode: 200, type: typeof(TokenResponse), description: "Success")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<IActionResult> EmailLogin([FromBody] EmailLoginRequest body, CancellationToken cancellationToken = default)
+    {
+        string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+        var parameter = new EmailAuthenticatorParameter { Email = body.Email, Password = body.Password, IpAddress = ipAddress };
+        AuthenticationResult result = await _authenticationService.Login(parameter, cancellationToken);
+
+        return FromAuthenticationResult(result);
+    }
+
+    /// <summary>
+    /// Аутентификация с помощью токена
+    /// </summary>
+    [HttpPost]
+    [Route("login/facebook")]
+    [ValidateModelState]
+    [SwaggerOperation("FacebookLogin")]
+    [SwaggerResponse(statusCode: 200, type: typeof(TokenResponse), description: "Success")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginRequest body, CancellationToken cancellationToken = default)
+    {
+        string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+        var parameter = new FacebookAuthenticatorParameter { Token = body.Token, IpAddress = ipAddress };
+        AuthenticationResult result = await _authenticationService.Login(parameter, cancellationToken);
+
+        return FromAuthenticationResult(result);
+    }
+
+    /// <summary>
+    /// Аутентификация с помощью токена
+    /// </summary>
+    [HttpPost]
+    [Route("login/google")]
+    [ValidateModelState]
+    [SwaggerOperation("GoogleLogin")]
+    [SwaggerResponse(statusCode: 200, type: typeof(TokenResponse), description: "Success")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest body, CancellationToken cancellationToken = default)
+    {
+        string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+        var parameter = new GoogleAuthenticatorParameter { Token = body.Token, IpAddress = ipAddress };
+        AuthenticationResult result = await _authenticationService.Login(parameter, cancellationToken);
+
+        return FromAuthenticationResult(result);
+    }
+
+    private IActionResult FromAuthenticationResult(AuthenticationResult result)
+    {
+        if (!result.Succeeded)
         {
-            _authenticationService = authenticationService;
+            return BadRequest(result.Errors.Aggregate((curr, next) => curr + ", " + next));
         }
 
-        /// <summary>
-        /// Аутентификация с помощью email и пароля
-        /// </summary>
-        [HttpPost]
-        [Route("login/email")]
-        [ValidateModelState]
-        [SwaggerOperation("EmailLogin")]
-        [SwaggerResponse(statusCode: 200, type: typeof(TokenResponse), description: "Success")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<IActionResult> EmailLogin([FromBody] EmailLoginRequest body, CancellationToken cancellationToken = default)
+        return Ok(new TokenResponse
         {
-            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-            var parameter = new EmailAuthenticatorParameter { Email = body.Email, Password = body.Password, IpAddress = ipAddress };
-            var result = await _authenticationService.Login(parameter, cancellationToken);
+            AccessToken = result.AccessToken,
+            ExpiresAt = result.ExpiresAt,
+            RefreshToken = result.RefreshToken
+        });
+    }
 
-            return FromAuthenticationResult(result);
-        }
+    /// <summary>
+    /// Обновление access и refresh токенов
+    /// </summary>
+    [HttpPost]
+    [Route("refreshtoken")]
+    [ValidateModelState]
+    [SwaggerOperation("RefreshToken")]
+    [SwaggerResponse(statusCode: 200, type: typeof(TokenResponse), description: "Success")]
+    [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest body, CancellationToken cancellationToken = default)
+    {
+        string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+        AuthenticationResult result = await _authenticationService.RefreshToken(body.RefreshToken, ipAddress, cancellationToken);
 
-        /// <summary>
-        /// Аутентификация с помощью токена
-        /// </summary>
-        [HttpPost]
-        [Route("login/facebook")]
-        [ValidateModelState]
-        [SwaggerOperation("FacebookLogin")]
-        [SwaggerResponse(statusCode: 200, type: typeof(TokenResponse), description: "Success")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginRequest body, CancellationToken cancellationToken = default)
-        {
-            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-            var parameter = new FacebookAuthenticatorParameter { Token = body.Token, IpAddress = ipAddress };
-            var result = await _authenticationService.Login(parameter, cancellationToken);
-
-            return FromAuthenticationResult(result);
-        }
-
-        /// <summary>
-        /// Аутентификация с помощью токена
-        /// </summary>
-        [HttpPost]
-        [Route("login/google")]
-        [ValidateModelState]
-        [SwaggerOperation("GoogleLogin")]
-        [SwaggerResponse(statusCode: 200, type: typeof(TokenResponse), description: "Success")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest body, CancellationToken cancellationToken = default)
-        {
-            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-            var parameter = new GoogleAuthenticatorParameter { Token = body.Token, IpAddress = ipAddress };
-            var result = await _authenticationService.Login(parameter, cancellationToken);
-
-            return FromAuthenticationResult(result);
-        }
-
-        private IActionResult FromAuthenticationResult(AuthenticationResult result)
-        {
-            if (!result.Succeeded)
-            {
-                return BadRequest(result.Errors.Aggregate((curr, next) => curr + ", " + next));
-            }
-
-            return Ok(new TokenResponse
-            {
-                AccessToken = result.AccessToken,
-                ExpiresAt = result.ExpiresAt,
-                RefreshToken = result.RefreshToken
-            });
-        }
-
-        /// <summary>
-        /// Обновление access и refresh токенов
-        /// </summary>
-        [HttpPost]
-        [Route("refreshtoken")]
-        [ValidateModelState]
-        [SwaggerOperation("RefreshToken")]
-        [SwaggerResponse(statusCode: 200, type: typeof(TokenResponse), description: "Success")]
-        [SwaggerResponse(statusCode: 500, type: typeof(Error), description: "Internal Server Error")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest body, CancellationToken cancellationToken = default)
-        {
-            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-            var result = await _authenticationService.RefreshToken(body.RefreshToken, ipAddress, cancellationToken);
-
-            return FromAuthenticationResult(result);
-        }
+        return FromAuthenticationResult(result);
     }
 }

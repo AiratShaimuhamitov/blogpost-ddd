@@ -11,19 +11,18 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Blogpost.WebApi.Models
+namespace Blogpost.WebApi.Models;
+
+/// <summary>
+///
+/// </summary>
+[DataContract]
+public class SubscribeRequest
 {
     /// <summary>
-    ///
+    /// Идентификатор профиля
     /// </summary>
-    [DataContract]
-    public class SubscribeRequest
-    {
-        /// <summary>
-        /// Идентификатор профиля
-        /// </summary>
-        /// <value>Идентификатор профиля</value>
-        [DataMember(Name = "ToProfileId")]
-        public Guid ToProfileId { get; set; }
-    }
+    /// <value>Идентификатор профиля</value>
+    [DataMember(Name = "ToProfileId")]
+    public Guid ToProfileId { get; set; }
 }

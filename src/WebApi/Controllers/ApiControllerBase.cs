@@ -2,14 +2,13 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Blogpost.WebApi.Controllers
-{
-    [ApiController]
-    [Route("api/[controller]")]
-    public abstract class ApiControllerBase : ControllerBase
-    {
-        private ISender _mediator;
+namespace Blogpost.WebApi.Controllers;
 
-        protected ISender Mediator => _mediator ??= HttpContext.RequestServices.GetService<ISender>();
-    }
+[ApiController]
+[Route("api/[controller]")]
+public abstract class ApiControllerBase : ControllerBase
+{
+    private ISender _mediator;
+
+    protected ISender Mediator => _mediator ??= HttpContext.RequestServices.GetService<ISender>();
 }

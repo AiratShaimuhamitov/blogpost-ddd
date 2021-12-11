@@ -1,9 +1,8 @@
 using System;
 
-namespace Blogpost.Application.LogBook.Queries.GetLogs
+namespace Blogpost.Application.LogBook.Queries.GetLogs;
+
+public record LogDto
 {
-    public record LogDto
-    {
-        public DateTime LogDate { get; set; }
-    }
+    public DateTime LogDate { get; set; }
 }

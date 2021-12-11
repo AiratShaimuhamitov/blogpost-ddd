@@ -4,33 +4,32 @@ using Microsoft.Extensions.Logging;
 using Blogpost.Application.Common.Models;
 using Blogpost.Infrastructure.Authentication.Models;
 
-namespace Blogpost.Infrastructure.Authentication.Authenticators
+namespace Blogpost.Infrastructure.Authentication.Authenticators;
+
+public class GoogleAuthenticator : IAuthenticator<GoogleAuthenticatorParameter>
 {
-    public class GoogleAuthenticator : IAuthenticator<GoogleAuthenticatorParameter>
+    private readonly ILogger<GoogleAuthenticator> _logger;
+
+    public GoogleAuthenticator(ILogger<GoogleAuthenticator> logger)
     {
-        private readonly ILogger<GoogleAuthenticator> _logger;
+        _logger = logger;
+    }
 
-        public GoogleAuthenticator(ILogger<GoogleAuthenticator> logger)
+    public bool IsExternalAuthenticator => true;
+
+    public async Task<AuthenticatorResult> Authenticate(GoogleAuthenticatorParameter parameter)
+    {
+        try
         {
-            _logger = logger;
+            GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature
+                .ValidateAsync(parameter.Token, new GoogleJsonWebSignature.ValidationSettings());
+
+            return AuthenticatorResult.Success(payload.Name, payload.Email);
         }
-
-        public bool IsExternalAuthenticator => true;
-
-        public async Task<AuthenticatorResult> Authenticate(GoogleAuthenticatorParameter parameter)
+        catch (InvalidJwtException e)
         {
-            try
-            {
-                var payload = await GoogleJsonWebSignature
-                    .ValidateAsync(parameter.Token, new GoogleJsonWebSignature.ValidationSettings());
-
-                return AuthenticatorResult.Success(payload.Name, payload.Email);
-            }
-            catch (InvalidJwtException e)
-            {
-                _logger.LogError(e, "Google jwt token is invalid");
-                return AuthenticatorResult.Failure("Google jwt token is invalid");
-            }
+            _logger.LogError(e, "Google jwt token is invalid");
+            return AuthenticatorResult.Failure("Google jwt token is invalid");
         }
     }
 }

@@ -9,39 +9,36 @@ using Blogpost.Application.Common.Interfaces;
 using Blogpost.Application.Profiles.Queries.Models;
 using Blogpost.Domain.Entities;
 
-namespace Blogpost.Application.Profiles.Queries.GetMyProfile
+namespace Blogpost.Application.Profiles.Queries.GetMyProfile;
+
+public class GetMyProfileQuery : IRequest<MyProfileDto>
 {
-    public class GetMyProfileQuery : IRequest<MyProfileDto>
+    public class GetMyProfileQueryHandler : IRequestHandler<GetMyProfileQuery, MyProfileDto>
     {
-        public class GetMyProfileQueryHandler : IRequestHandler<GetMyProfileQuery, MyProfileDto>
+        private readonly IConfiguration _configuration;
+        private readonly ICurrentUserService _currentUserService;
+
+        public GetMyProfileQueryHandler(IConfiguration configuration, ICurrentUserService currentUserService)
         {
-            private readonly IConfiguration _configuration;
-            private readonly ICurrentUserService _currentUserService;
+            _configuration = configuration;
+            _currentUserService = currentUserService;
+        }
 
-            public GetMyProfileQueryHandler(IConfiguration configuration, ICurrentUserService currentUserService)
-            {
-                _configuration = configuration;
-                _currentUserService = currentUserService;
-            }
+        public async Task<MyProfileDto> Handle(GetMyProfileQuery request, CancellationToken cancellationToken)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            public async Task<MyProfileDto> Handle(GetMyProfileQuery request, CancellationToken cancellationToken)
-            {
-                var connectionString = _configuration.GetConnectionString("DefaultConnection");
+            var profileId = _currentUserService.UserId;
 
-                var profileId = _currentUserService.UserId;
-
-                await using (var db = new SqlConnection(connectionString))
-                {
-                    var profile = await db.QuerySingleOrDefaultAsync<MyProfileDto>(
-                        @"select Id, Name, Emai from Profiles
+            await using var db = new SqlConnection(connectionString);
+            var profile = await db.QuerySingleOrDefaultAsync<MyProfileDto>(
+                @"select Id, Name, Emai from Profiles
                                 where Id = @ProfileId",
-                        new { ProfileId = profileId!.Value });
+                new { ProfileId = profileId!.Value });
 
-                    if (profile is null) throw new NotFoundException(nameof(Profile), profileId);
+            if (profile is null) throw new NotFoundException(nameof(Profile), profileId);
 
-                    return profile;
-                }
-            }
+            return profile;
         }
     }
 }

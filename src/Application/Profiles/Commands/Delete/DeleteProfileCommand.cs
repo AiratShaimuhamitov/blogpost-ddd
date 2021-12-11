@@ -5,29 +5,28 @@ using MediatR;
 using Blogpost.Application.Common.Interfaces;
 using Blogpost.Application.Repositories;
 
-namespace Blogpost.Application.Profiles.Commands.Delete
+namespace Blogpost.Application.Profiles.Commands.Delete;
+
+public class DeleteProfileCommand : IRequest
 {
-    public class DeleteProfileCommand : IRequest
+    public Guid ProfileId { get; set; }
+
+    public class DeleteProfileCommandHandler : AsyncRequestHandler<DeleteProfileCommand>
     {
-        public Guid ProfileId { get; set; }
+        private readonly ProfilesRepository _profilesRepository;
+        private readonly IApplicationDbContext _context;
 
-        public class DeleteProfileCommandHandler : AsyncRequestHandler<DeleteProfileCommand>
+        public DeleteProfileCommandHandler(ProfilesRepository profilesRepository, IApplicationDbContext context)
         {
-            private readonly ProfilesRepository _profilesRepository;
-            private readonly IApplicationDbContext _context;
+            _profilesRepository = profilesRepository;
+            _context = context;
+        }
 
-            public DeleteProfileCommandHandler(ProfilesRepository profilesRepository, IApplicationDbContext context)
-            {
-                _profilesRepository = profilesRepository;
-                _context = context;
-            }
+        protected override async Task Handle(DeleteProfileCommand request, CancellationToken cancellationToken)
+        {
+            await _profilesRepository.DeleteProfileById(request.ProfileId, cancellationToken);
 
-            protected override async Task Handle(DeleteProfileCommand request, CancellationToken cancellationToken)
-            {
-                await _profilesRepository.DeleteProfileById(request.ProfileId, cancellationToken);
-
-                await _context.SaveChangesAsync(cancellationToken);
-            }
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

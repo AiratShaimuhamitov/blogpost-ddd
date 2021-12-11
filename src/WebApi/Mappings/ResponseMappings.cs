@@ -6,38 +6,37 @@ using Blogpost.Application.Posts.Queries.GetPostsWithPagination;
 using Blogpost.Application.Profiles.Queries.Models;
 using Blogpost.WebApi.Models;
 
-namespace Blogpost.WebApi.Mappings
+namespace Blogpost.WebApi.Mappings;
+
+public class ResponseMappings : Profile
 {
-    public class ResponseMappings : Profile
+    public ResponseMappings()
     {
-        public ResponseMappings()
-        {
-            CreateMap<PostDto, Post>()
-                .ForMember(d => d.CreatedBy, opt => opt.MapFrom(x => new CreatedBy { Id = x.CreatedById, Name = x.CreatedByName }));
+        CreateMap<PostDto, Post>()
+            .ForMember(d => d.CreatedBy, opt => opt.MapFrom(x => new CreatedBy { Id = x.CreatedById, Name = x.CreatedByName }));
 
-            CreateMap<PaginatedList<PostDto>, GetPostsResponse>();
+        CreateMap<PaginatedList<PostDto>, GetPostsResponse>();
 
-            CreateMap<ArticleDto, Article>();
+        CreateMap<ArticleDto, Article>();
 
-            CreateMap<PaginatedList<ArticleDto>, GetArticlesResponse>();
+        CreateMap<PaginatedList<ArticleDto>, GetArticlesResponse>();
 
-            CreateMap<CommentDto, CommentBase>()
-                .ForMember(d => d.CreatedBy, opt => opt.MapFrom(x => new CreatedBy { Id = x.CreatedById, Name = x.CreatedByName }));
+        CreateMap<CommentDto, CommentBase>()
+            .ForMember(d => d.CreatedBy, opt => opt.MapFrom(x => new CreatedBy { Id = x.CreatedById, Name = x.CreatedByName }));
 
-            CreateMap<CommentDto, SubComment>()
-                .IncludeBase<CommentDto, CommentBase>();
+        CreateMap<CommentDto, SubComment>()
+            .IncludeBase<CommentDto, CommentBase>();
 
-            CreateMap<CommentDto, Comment>()
-                .ForMember(d => d.SubComments, opt => opt.MapFrom(s => s.SubComments))
-                .IncludeBase<CommentDto, CommentBase>();
+        CreateMap<CommentDto, Comment>()
+            .ForMember(d => d.SubComments, opt => opt.MapFrom(s => s.SubComments))
+            .IncludeBase<CommentDto, CommentBase>();
 
-            CreateMap<MyProfileDto, MyProfile>();
+        CreateMap<MyProfileDto, MyProfile>();
 
-            CreateMap<ProfileDto, UserProfile>();
+        CreateMap<ProfileDto, UserProfile>();
 
-            CreateMap<ProfileDto, Subscriber>();
+        CreateMap<ProfileDto, Subscriber>();
 
-            CreateMap<ProfileDto, Subscription>();
-        }
+        CreateMap<ProfileDto, Subscription>();
     }
 }

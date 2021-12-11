@@ -3,28 +3,27 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Blogpost.Application.Common.Interfaces;
 
-namespace Blogpost.WebApi.Services
+namespace Blogpost.WebApi.Services;
+
+public class CurrentUserService : ICurrentUserService
 {
-    public class CurrentUserService : ICurrentUserService
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public CurrentUserService(IHttpContextAccessor httpContextAccessor)
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        _httpContextAccessor = httpContextAccessor;
+    }
 
-        public CurrentUserService(IHttpContextAccessor httpContextAccessor)
+    public Guid? UserId
+    {
+        get
         {
-            _httpContextAccessor = httpContextAccessor;
-        }
-
-        public Guid? UserId
-        {
-            get
+            if (Guid.TryParse(_httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Name), out Guid userId))
             {
-                if (Guid.TryParse(_httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Name), out var userId))
-                {
-                    return userId;
-                }
-
-                return null;
+                return userId;
             }
+
+            return null;
         }
     }
 }

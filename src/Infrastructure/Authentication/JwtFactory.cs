@@ -7,36 +7,35 @@ using Microsoft.IdentityModel.Tokens;
 using Blogpost.Application.Common.Models;
 using Blogpost.Infrastructure.Authentication.Models;
 
-namespace Blogpost.Infrastructure.Authentication
+namespace Blogpost.Infrastructure.Authentication;
+
+public sealed class JwtFactory
 {
-    public sealed class JwtFactory
+    private readonly JwtIssuerOptions _jwtIssuerOptions;
+
+    public JwtFactory(IOptions<JwtIssuerOptions> jwtOptions)
     {
-        private readonly JwtIssuerOptions _jwtIssuerOptions;
+        _jwtIssuerOptions = jwtOptions.Value;
+    }
 
-        public JwtFactory(IOptions<JwtIssuerOptions> jwtOptions)
+    public Token Generate(Guid userId)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+
+        var tokenDescriptor = new SecurityTokenDescriptor
         {
-            _jwtIssuerOptions = jwtOptions.Value;
-        }
-
-        public Token Generate(Guid userId)
-        {
-            var tokenHandler = new JwtSecurityTokenHandler();
-
-            var tokenDescriptor = new SecurityTokenDescriptor
+            Subject = new ClaimsIdentity(new[]
             {
-                Subject = new ClaimsIdentity(new[]
-                {
-                    new Claim(ClaimTypes.Name, userId.ToString())
-                }),
-                Issuer = _jwtIssuerOptions.Issuer,
-                IssuedAt = _jwtIssuerOptions.IssuedAt,
-                Audience = _jwtIssuerOptions.Audience,
-                Expires = _jwtIssuerOptions.Expiration,
-                SigningCredentials = _jwtIssuerOptions.SigningCredentials
-            };
-            var securityToken = tokenHandler.CreateToken(tokenDescriptor);
+                new Claim(ClaimTypes.Name, userId.ToString())
+            }),
+            Issuer = _jwtIssuerOptions.Issuer,
+            IssuedAt = _jwtIssuerOptions.IssuedAt,
+            Audience = _jwtIssuerOptions.Audience,
+            Expires = _jwtIssuerOptions.Expiration,
+            SigningCredentials = _jwtIssuerOptions.SigningCredentials
+        };
+        SecurityToken securityToken = tokenHandler.CreateToken(tokenDescriptor);
 
-            return new Token { Value = tokenHandler.WriteToken(securityToken), ExpiresAt = _jwtIssuerOptions.Expiration };
-        }
+        return new Token { Value = tokenHandler.WriteToken(securityToken), ExpiresAt = _jwtIssuerOptions.Expiration };
     }
 }

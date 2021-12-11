@@ -10,41 +10,41 @@ using Microsoft.Extensions.Configuration;
 using Blogpost.Application.Common.Models;
 using Blogpost.Application.Posts.Queries.GetPostsWithPagination;
 
-namespace Blogpost.Application.Posts.Queries.GetSubscriptionsPostsWithPagination
+namespace Blogpost.Application.Posts.Queries.GetSubscriptionsPostsWithPagination;
+
+public class GetSubscriptionsPostsWithPaginationQuery : IRequest<PaginatedList<PostDto>>
 {
-    public class GetSubscriptionsPostsWithPaginationQuery : IRequest<PaginatedList<PostDto>>
+    public Guid ProfileId { get; set; }
+
+    public int PageNumber { get; init; } = 1;
+    public int PageSize { get; init; } = 10;
+
+    public class GetSubscriptionsPostsWithPaginationQueryHandler : IRequestHandler<GetSubscriptionsPostsWithPaginationQuery,
+        PaginatedList<PostDto>>
     {
-        public Guid ProfileId { get; set; }
+        private readonly IConfiguration _configuration;
 
-        public int PageNumber { get; init; } = 1;
-        public int PageSize { get; init; } = 10;
-
-        public class GetSubscriptionsPostsWithPaginationQueryHandler : IRequestHandler<GetSubscriptionsPostsWithPaginationQuery,
-                PaginatedList<PostDto>>
+        public GetSubscriptionsPostsWithPaginationQueryHandler(IConfiguration configuration)
         {
-            private readonly IConfiguration _configuration;
+            _configuration = configuration;
+        }
 
-            public GetSubscriptionsPostsWithPaginationQueryHandler(IConfiguration configuration)
+        public async Task<PaginatedList<PostDto>> Handle(GetSubscriptionsPostsWithPaginationQuery request, CancellationToken cancellationToken)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+            IEnumerable<PostDto> postsDto;
+            int total;
+            await using (var db = new SqlConnection(connectionString))
             {
-                _configuration = configuration;
-            }
-
-            public async Task<PaginatedList<PostDto>> Handle(GetSubscriptionsPostsWithPaginationQuery request, CancellationToken cancellationToken)
-            {
-                var connectionString = _configuration.GetConnectionString("DefaultConnection");
-
-                IEnumerable<PostDto> postsDto;
-                int total;
-                await using (var db = new SqlConnection(connectionString))
-                {
-                    total = await db.QuerySingleAsync<int>(@"select count(*) from posts
+                total = await db.QuerySingleAsync<int>(@"select count(*) from posts
                                                                     where CreatedById in (select ProfileId from Subscription
                                                                         where SubscriberId = @ProfileId)
                                                                         and IsVisible = 1",
-                        new { ProfileId = request.ProfileId });
+                    new { ProfileId = request.ProfileId });
 
-                    postsDto = await db.QueryAsync<PostDto>(
-                        @"select post.Id, Content, Created as CreatedAt, CreatedById as CreatedBy, pr.Name as CreatedByName,
+                postsDto = await db.QueryAsync<PostDto>(
+                    @"select post.Id, Content, Created as CreatedAt, CreatedById as CreatedBy, pr.Name as CreatedByName,
                                        (select count(*) from Likes where PostId = post.Id) as Likes,
                                        (select count(*) from Comments where PostId = post.Id) as Comments,
                                        (select count(*) from Likes where PostId = post.Id and ProfileId = @ProfileId) as HasLikeFromCurrentUser
@@ -56,16 +56,15 @@ namespace Blogpost.Application.Posts.Queries.GetSubscriptionsPostsWithPagination
                                 order by Created desc
                                 offset @Skip rows
                                     fetch next @Take rows only;",
-                        new
-                        {
-                            ProfileId = request.ProfileId,
-                            Skip = (request.PageNumber - 1) * request.PageSize,
-                            Take = request.PageSize
-                        });
-                }
-
-                return new PaginatedList<PostDto>(postsDto.ToList(), total, request.PageNumber, request.PageSize);
+                    new
+                    {
+                        ProfileId = request.ProfileId,
+                        Skip = (request.PageNumber - 1) * request.PageSize,
+                        Take = request.PageSize
+                    });
             }
+
+            return new PaginatedList<PostDto>(postsDto.ToList(), total, request.PageNumber, request.PageSize);
         }
     }
 }

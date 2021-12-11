@@ -1,9 +1,8 @@
 using System;
 
-namespace Blogpost.Application.Common.Interfaces
+namespace Blogpost.Application.Common.Interfaces;
+
+public interface IDateTime
 {
-    public interface IDateTime
-    {
-        DateTime Now { get; }
-    }
+    DateTime Now { get; }
 }

@@ -7,39 +7,38 @@ using Blogpost.Application.Common.Interfaces;
 using Blogpost.Application.Repositories;
 using Blogpost.Domain.Entities;
 
-namespace Blogpost.Application.Comments.Commands.Unlike
+namespace Blogpost.Application.Comments.Commands.Unlike;
+
+public class UnlikeCommentCommand : IRequest
 {
-    public class UnlikeCommentCommand : IRequest
+    public Guid CommentId { get; init; }
+
+    public Guid ProfileId { get; init; }
+
+    public class UnlikePostCommandHandler : AsyncRequestHandler<UnlikeCommentCommand>
     {
-        public Guid CommentId { get; init; }
+        private readonly IApplicationDbContext _applicationDbContext;
 
-        public Guid ProfileId { get; init; }
+        private readonly CommentsRepository _commentsRepository;
 
-        public class UnlikePostCommandHandler : AsyncRequestHandler<UnlikeCommentCommand>
+        public UnlikePostCommandHandler(IApplicationDbContext applicationDbContext,
+            CommentsRepository commentsRepository)
         {
-            private readonly IApplicationDbContext _applicationDbContext;
+            _applicationDbContext = applicationDbContext;
+            _commentsRepository = commentsRepository;
+        }
 
-            private readonly CommentsRepository _commentsRepository;
+        protected override async Task Handle(UnlikeCommentCommand request, CancellationToken cancellationToken)
+        {
+            Comment comment = await _commentsRepository.GetById(request.CommentId, cancellationToken);
 
-            public UnlikePostCommandHandler(IApplicationDbContext applicationDbContext,
-                CommentsRepository commentsRepository)
-            {
-                _applicationDbContext = applicationDbContext;
-                _commentsRepository = commentsRepository;
-            }
+            Profile profile = await _applicationDbContext.Profiles
+                .FindAsync(new object[] { request.ProfileId }, cancellationToken);
+            if (profile == null) throw new NotFoundException("Profile", request.ProfileId);
 
-            protected override async Task Handle(UnlikeCommentCommand request, CancellationToken cancellationToken)
-            {
-                var comment = await _commentsRepository.GetById(request.CommentId, cancellationToken);
+            comment.UnlikeFrom(profile);
 
-                var profile = await _applicationDbContext.Profiles
-                    .FindAsync(new object[] { request.ProfileId }, cancellationToken);
-                if (profile == null) throw new NotFoundException("Profile", request.ProfileId);
-
-                comment.UnlikeFrom(profile);
-
-                await _applicationDbContext.SaveChangesAsync(cancellationToken);
-            }
+            await _applicationDbContext.SaveChangesAsync(cancellationToken);
         }
     }
 }

@@ -1,10 +1,9 @@
 using System;
 using Blogpost.Application.Common.Interfaces;
 
-namespace Blogpost.Infrastructure.Services
+namespace Blogpost.Infrastructure.Services;
+
+public class DateTimeService : IDateTime
 {
-    public class DateTimeService : IDateTime
-    {
-        public DateTime Now => DateTime.Now;
-    }
+    public DateTime Now => DateTime.Now;
 }

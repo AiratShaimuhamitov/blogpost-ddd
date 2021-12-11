@@ -1,16 +1,15 @@
 using FluentValidation;
 
-namespace Blogpost.Application.Articles.Queries.GetArticlesWithPagination
-{
-    public class GetArticlesWithPaginationQueryValidator : AbstractValidator<GetArticlesWithPaginationQuery>
-    {
-        public GetArticlesWithPaginationQueryValidator()
-        {
-            RuleFor(x => x.PageNumber)
-                .GreaterThanOrEqualTo(1).WithMessage("PageNumber at least greater than or equal to 1.");
+namespace Blogpost.Application.Articles.Queries.GetArticlesWithPagination;
 
-            RuleFor(x => x.PageSize)
-                .GreaterThanOrEqualTo(1).WithMessage("PageSize at least greater than or equal to 1.");
-        }
+public class GetArticlesWithPaginationQueryValidator : AbstractValidator<GetArticlesWithPaginationQuery>
+{
+    public GetArticlesWithPaginationQueryValidator()
+    {
+        RuleFor(x => x.PageNumber)
+            .GreaterThanOrEqualTo(1).WithMessage("PageNumber at least greater than or equal to 1.");
+
+        RuleFor(x => x.PageSize)
+            .GreaterThanOrEqualTo(1).WithMessage("PageSize at least greater than or equal to 1.");
     }
 }

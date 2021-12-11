@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 
-namespace Blogpost.Domain.Common
+namespace Blogpost.Domain.Common;
+
+public interface IHasDomainEvent
 {
-    public interface IHasDomainEvent
-    {
-        IReadOnlyList<DomainEvent> DomainEvents { get; }
-    }
+    IReadOnlyList<DomainEvent> DomainEvents { get; }
 }

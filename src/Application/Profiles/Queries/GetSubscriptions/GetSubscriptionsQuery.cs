@@ -9,36 +9,33 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Blogpost.Application.Profiles.Queries.Models;
 
-namespace Blogpost.Application.Profiles.Queries.GetSubscriptions
+namespace Blogpost.Application.Profiles.Queries.GetSubscriptions;
+
+public class GetSubscriptionsQuery : IRequest<List<ProfileDto>>
 {
-    public class GetSubscriptionsQuery : IRequest<List<ProfileDto>>
+    public Guid ProfileId { get; init; }
+
+    public class GetSubscriptionsQueryHandler : IRequestHandler<GetSubscriptionsQuery, List<ProfileDto>>
     {
-        public Guid ProfileId { get; set; }
+        private readonly IConfiguration _configuration;
 
-        public class GetSubscriptionsQueryHandler : IRequestHandler<GetSubscriptionsQuery, List<ProfileDto>>
+        public GetSubscriptionsQueryHandler(IConfiguration configuration)
         {
-            private readonly IConfiguration _configuration;
+            _configuration = configuration;
+        }
 
-            public GetSubscriptionsQueryHandler(IConfiguration configuration)
-            {
-                _configuration = configuration;
-            }
+        public async Task<List<ProfileDto>> Handle(GetSubscriptionsQuery request, CancellationToken cancellationToken)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            public async Task<List<ProfileDto>> Handle(GetSubscriptionsQuery request, CancellationToken cancellationToken)
-            {
-                var connectionString = _configuration.GetConnectionString("DefaultConnection");
-
-                await using (var db = new SqlConnection(connectionString))
-                {
-                    var profiles = await db.QueryAsync<ProfileDto>(
-                        @"select P.Id, P.Name from Subscription S
+            await using var db = new SqlConnection(connectionString);
+            var profiles = await db.QueryAsync<ProfileDto>(
+                @"select P.Id, P.Name from Subscription S
                                 join Profiles P on S.ProfileId = P.Id
                                 where S.SubscriberId = @ProfileId",
-                        new { ProfileId = request.ProfileId });
+                new { request.ProfileId });
 
-                    return profiles.ToList();
-                }
-            }
+            return profiles.ToList();
         }
     }
 }

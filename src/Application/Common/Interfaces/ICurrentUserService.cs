@@ -1,9 +1,8 @@
 using System;
 
-namespace Blogpost.Application.Common.Interfaces
+namespace Blogpost.Application.Common.Interfaces;
+
+public interface ICurrentUserService
 {
-    public interface ICurrentUserService
-    {
-        Guid? UserId { get; }
-    }
+    Guid? UserId { get; }
 }

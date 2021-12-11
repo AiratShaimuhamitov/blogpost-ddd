@@ -6,35 +6,34 @@ using Blogpost.Application.Common.Exceptions;
 using Blogpost.Application.Common.Interfaces;
 using Blogpost.Domain.Entities;
 
-namespace Blogpost.Application.Comments.Commands.AddSubComment
+namespace Blogpost.Application.Comments.Commands.AddSubComment;
+
+public class AddSubCommentRequest : IRequest<Guid>
 {
-    public class AddSubCommentRequest : IRequest<Guid>
+    public Guid CommentId { get; init; }
+
+    public string Content { get; init; }
+
+    public class AddSubCommentRequestHandler : IRequestHandler<AddSubCommentRequest, Guid>
     {
-        public Guid CommentId { get; init; }
+        private readonly IApplicationDbContext _applicationDbContext;
 
-        public string Content { get; init; }
-
-        public class AddSubCommentRequestHandler : IRequestHandler<AddSubCommentRequest, Guid>
+        public AddSubCommentRequestHandler(IApplicationDbContext applicationDbContext)
         {
-            private readonly IApplicationDbContext _applicationDbContext;
+            _applicationDbContext = applicationDbContext;
+        }
 
-            public AddSubCommentRequestHandler(IApplicationDbContext applicationDbContext)
-            {
-                _applicationDbContext = applicationDbContext;
-            }
+        public async Task<Guid> Handle(AddSubCommentRequest request, CancellationToken cancellationToken)
+        {
+            Comment comment = await _applicationDbContext.Comments
+                .FindAsync(new object[] { request.CommentId }, cancellationToken);
+            if (comment == null) throw new NotFoundException(nameof(Comment), request.CommentId);
 
-            public async Task<Guid> Handle(AddSubCommentRequest request, CancellationToken cancellationToken)
-            {
-                var comment = await _applicationDbContext.Comments
-                    .FindAsync(new object[] { request.CommentId }, cancellationToken);
-                if (comment == null) throw new NotFoundException(nameof(Comment), request.CommentId);
+            Comment subComment = comment.AddSubComment(request.Content);
 
-                var subComment = comment.AddSubComment(request.Content);
+            await _applicationDbContext.SaveChangesAsync(cancellationToken);
 
-                await _applicationDbContext.SaveChangesAsync(cancellationToken);
-
-                return subComment.Id;
-            }
+            return subComment.Id;
         }
     }
 }

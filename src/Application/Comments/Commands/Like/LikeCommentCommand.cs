@@ -5,38 +5,38 @@ using MediatR;
 using Blogpost.Application.Common.Exceptions;
 using Blogpost.Application.Common.Interfaces;
 using Blogpost.Application.Repositories;
+using Blogpost.Domain.Entities;
 
-namespace Blogpost.Application.Comments.Commands.Like
+namespace Blogpost.Application.Comments.Commands.Like;
+
+public class LikeCommentCommand : IRequest
 {
-    public class LikeCommentCommand : IRequest
+    public Guid CommentId { get; init; }
+
+    public Guid ProfileId { get; init; }
+
+    public class LikeCommentCommandHandler : AsyncRequestHandler<LikeCommentCommand>
     {
-        public Guid CommentId { get; init; }
+        private readonly IApplicationDbContext _context;
+        private readonly CommentsRepository _commentsRepository;
 
-        public Guid ProfileId { get; init; }
-
-        public class LikeCommentCommandHandler : AsyncRequestHandler<LikeCommentCommand>
+        public LikeCommentCommandHandler(IApplicationDbContext context, CommentsRepository commentsRepository)
         {
-            private readonly IApplicationDbContext _context;
-            private readonly CommentsRepository _commentsRepository;
+            _context = context;
+            _commentsRepository = commentsRepository;
+        }
 
-            public LikeCommentCommandHandler(IApplicationDbContext context, CommentsRepository commentsRepository)
-            {
-                _context = context;
-                _commentsRepository = commentsRepository;
-            }
+        protected override async Task Handle(LikeCommentCommand request, CancellationToken cancellationToken)
+        {
+            Comment comment = await _commentsRepository.GetById(request.CommentId, cancellationToken);
 
-            protected override async Task Handle(LikeCommentCommand request, CancellationToken cancellationToken)
-            {
-                var comment = await _commentsRepository.GetById(request.CommentId, cancellationToken);
+            Profile profile = await _context.Profiles
+                .FindAsync(new object[] { request.ProfileId }, cancellationToken);
+            if (profile == null) throw new NotFoundException("Profile", request.ProfileId);
 
-                var profile = await _context.Profiles
-                    .FindAsync(new object[] { request.ProfileId }, cancellationToken);
-                if (profile == null) throw new NotFoundException("Profile", request.ProfileId);
+            comment.PutLikeFrom(profile);
 
-                comment.PutLikeFrom(profile);
-
-                await _context.SaveChangesAsync(cancellationToken);
-            }
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

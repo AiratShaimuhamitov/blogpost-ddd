@@ -11,26 +11,25 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Blogpost.WebApi.Models
+namespace Blogpost.WebApi.Models;
+
+/// <summary>
+///
+/// </summary>
+[DataContract]
+public partial class Subscription
 {
     /// <summary>
-    ///
+    /// Идентификатор профиля
     /// </summary>
-    [DataContract]
-    public partial class Subscription
-    {
-        /// <summary>
-        /// Идентификатор профиля
-        /// </summary>
-        /// <value>Идентификатор профиля</value>
-        [DataMember(Name = "id")]
-        public Guid? Id { get; set; }
+    /// <value>Идентификатор профиля</value>
+    [DataMember(Name = "id")]
+    public Guid? Id { get; set; }
 
-        /// <summary>
-        /// Имя пользователя
-        /// </summary>
-        /// <value>Имя пользователя</value>
-        [DataMember(Name = "name")]
-        public string Name { get; set; }
-    }
+    /// <summary>
+    /// Имя пользователя
+    /// </summary>
+    /// <value>Имя пользователя</value>
+    [DataMember(Name = "name")]
+    public string Name { get; set; }
 }

@@ -10,40 +10,40 @@ using Blogpost.Application.Common.Interfaces;
 using Blogpost.Application.Common.Models;
 using Blogpost.Application.Posts.Queries.GetPostsWithPagination;
 
-namespace Blogpost.Application.Posts.Queries.GetMyPostsWithPagination
+namespace Blogpost.Application.Posts.Queries.GetMyPostsWithPagination;
+
+public class GetMyPostsWithPaginationQuery : IRequest<PaginatedList<PostDto>>
 {
-    public class GetMyPostsWithPaginationQuery : IRequest<PaginatedList<PostDto>>
+    public int PageNumber { get; init; } = 1;
+    public int PageSize { get; init; } = 10;
+
+    public bool IsVisible { get; init; } = true;
+
+    public class GetMyPostsWithPaginationQueryHandler : IRequestHandler<GetMyPostsWithPaginationQuery, PaginatedList<PostDto>>
     {
-        public int PageNumber { get; init; } = 1;
-        public int PageSize { get; init; } = 10;
+        private readonly IConfiguration _configuration;
+        private readonly ICurrentUserService _currentUserService;
 
-        public bool IsVisible { get; init; } = true;
-
-        public class GetMyPostsWithPaginationQueryHandler : IRequestHandler<GetMyPostsWithPaginationQuery, PaginatedList<PostDto>>
+        public GetMyPostsWithPaginationQueryHandler(ICurrentUserService currentUserService,
+            IConfiguration configuration)
         {
-            private readonly IConfiguration _configuration;
-            private readonly ICurrentUserService _currentUserService;
+            _currentUserService = currentUserService;
+            _configuration = configuration;
+        }
 
-            public GetMyPostsWithPaginationQueryHandler(ICurrentUserService currentUserService,
-                IConfiguration configuration)
+        public async Task<PaginatedList<PostDto>> Handle(GetMyPostsWithPaginationQuery request, CancellationToken cancellationToken)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+            IEnumerable<PostDto> postsDto;
+            int total;
+            await using (var db = new SqlConnection(connectionString))
             {
-                _currentUserService = currentUserService;
-                _configuration = configuration;
-            }
+                total = await db.QuerySingleAsync<int>(@"select count(*) from posts where IsVisible = @IsVisible",
+                    new { request.IsVisible });
 
-            public async Task<PaginatedList<PostDto>> Handle(GetMyPostsWithPaginationQuery request, CancellationToken cancellationToken)
-            {
-                var connectionString = _configuration.GetConnectionString("DefaultConnection");
-
-                IEnumerable<PostDto> postsDto;
-                int total;
-                await using (var db = new SqlConnection(connectionString))
-                {
-                    total = await db.QuerySingleAsync<int>(@"select count(*) from posts where IsVisible = @IsVisible",
-                        new { IsVisible = request.IsVisible });
-
-                    postsDto = await db.QueryAsync<PostDto>(
-                        @"select post.Id, Content, IsVisible, Created as CreatedAt, CreatedById as CreatedBy, pr.Name as CreatedByName,
+                postsDto = await db.QueryAsync<PostDto>(
+                    @"select post.Id, Content, IsVisible, Created as CreatedAt, CreatedById as CreatedBy, pr.Name as CreatedByName,
                                (select count(*) from Likes where PostId = post.Id) as Likes,
                                (select count(*) from Comments where PostId = post.Id) as Comments,
                                (select count(*) from Likes where PostId = post.Id and ProfileId = @ProfileId) as HasLikeFromCurrentUser
@@ -53,17 +53,16 @@ namespace Blogpost.Application.Posts.Queries.GetMyPostsWithPagination
                                 order by Created desc
                                 offset @Skip rows
                                 fetch next @Take rows only;",
-                        new
-                        {
-                            ProfileId = _currentUserService.UserId,
-                            IsVisible = request.IsVisible,
-                            Skip = (request.PageNumber - 1) * request.PageSize,
-                            Take = request.PageSize
-                        });
-                }
-
-                return new PaginatedList<PostDto>(postsDto.ToList(), total, request.PageNumber, request.PageSize);
+                    new
+                    {
+                        ProfileId = _currentUserService.UserId,
+                        IsVisible = request.IsVisible,
+                        Skip = (request.PageNumber - 1) * request.PageSize,
+                        Take = request.PageSize
+                    });
             }
+
+            return new PaginatedList<PostDto>(postsDto.ToList(), total, request.PageNumber, request.PageSize);
         }
     }
 }

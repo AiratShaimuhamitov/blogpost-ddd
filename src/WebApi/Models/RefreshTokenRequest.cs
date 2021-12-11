@@ -1,11 +1,10 @@
 using System.Runtime.Serialization;
 
-namespace Blogpost.WebApi.Models
+namespace Blogpost.WebApi.Models;
+
+[DataContract]
+public class RefreshTokenRequest
 {
-    [DataContract]
-    public class RefreshTokenRequest
-    {
-        [DataMember(Name = "refreshToken")]
-        public string RefreshToken { get; set; }
-    }
+    [DataMember(Name = "refreshToken")]
+    public string RefreshToken { get; set; }
 }

@@ -1,33 +1,32 @@
 using System;
 using Blogpost.Domain.Entities;
 
-namespace Blogpost.Domain.Common
+namespace Blogpost.Domain.Common;
+
+public interface IAuditableEntity
 {
-    public interface IAuditableEntity
-    {
-        DateTime Created { get; set; }
+    DateTime Created { get; set; }
 
-        Guid CreatedById { get; set; }
-        Profile CreatedBy { get; set; }
+    Guid CreatedById { get; set; }
+    Profile CreatedBy { get; set; }
 
-        DateTime? LastModified { get; set; }
+    DateTime? LastModified { get; set; }
 
-        Guid? LastModifiedById { get; set; }
-        Profile LastModifiedBy { get; set; }
-    }
+    Guid? LastModifiedById { get; set; }
+    Profile LastModifiedBy { get; set; }
+}
 
 
-    public abstract class AuditableEntity<TKey> : Entity<TKey>, IAuditableEntity
-        where TKey : struct
-    {
-        public DateTime Created { get; set; }
+public abstract class AuditableEntity<TKey> : Entity<TKey>, IAuditableEntity
+    where TKey : struct
+{
+    public DateTime Created { get; set; }
 
-        public Guid CreatedById { get; set; }
-        public virtual Profile CreatedBy { get; set; }
+    public Guid CreatedById { get; set; }
+    public virtual Profile CreatedBy { get; set; }
 
-        public DateTime? LastModified { get; set; }
+    public DateTime? LastModified { get; set; }
 
-        public Guid? LastModifiedById { get; set; }
-        public virtual Profile LastModifiedBy { get; set; }
-    }
+    public Guid? LastModifiedById { get; set; }
+    public virtual Profile LastModifiedBy { get; set; }
 }

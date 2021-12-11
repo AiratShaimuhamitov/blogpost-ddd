@@ -9,37 +9,34 @@ using Blogpost.Application.Common.Exceptions;
 using Blogpost.Application.Profiles.Queries.Models;
 using Blogpost.Domain.Entities;
 
-namespace Blogpost.Application.Profiles.Queries.GetProfileById
+namespace Blogpost.Application.Profiles.Queries.GetProfileById;
+
+public class GetProfileByIdQuery : IRequest<ProfileDto>
 {
-    public class GetProfileByIdQuery : IRequest<ProfileDto>
+    public Guid ProfileId { get; set; }
+
+    public class GetProfileByIdQueryHandler : IRequestHandler<GetProfileByIdQuery, ProfileDto>
     {
-        public Guid ProfileId { get; set; }
+        private readonly IConfiguration _configuration;
 
-        public class GetProfileByIdQueryHandler : IRequestHandler<GetProfileByIdQuery, ProfileDto>
+        public GetProfileByIdQueryHandler(IConfiguration configuration)
         {
-            private readonly IConfiguration _configuration;
+            _configuration = configuration;
+        }
 
-            public GetProfileByIdQueryHandler(IConfiguration configuration)
-            {
-                _configuration = configuration;
-            }
+        public async Task<ProfileDto> Handle(GetProfileByIdQuery request, CancellationToken cancellationToken)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            public async Task<ProfileDto> Handle(GetProfileByIdQuery request, CancellationToken cancellationToken)
-            {
-                var connectionString = _configuration.GetConnectionString("DefaultConnection");
-
-                await using (var db = new SqlConnection(connectionString))
-                {
-                    var profile = await db.QuerySingleOrDefaultAsync<ProfileDto>(
-                        @"select Id, Name from Profiles
+            await using var db = new SqlConnection(connectionString);
+            var profile = await db.QuerySingleOrDefaultAsync<ProfileDto>(
+                @"select Id, Name from Profiles
                                 where Id = @ProfileId",
-                        new { ProfileId = request.ProfileId });
+                new { ProfileId = request.ProfileId });
 
-                    if (profile is null) throw new NotFoundException(nameof(Profile), request.ProfileId);
+            if (profile is null) throw new NotFoundException(nameof(Profile), request.ProfileId);
 
-                    return profile;
-                }
-            }
+            return profile;
         }
     }
 }

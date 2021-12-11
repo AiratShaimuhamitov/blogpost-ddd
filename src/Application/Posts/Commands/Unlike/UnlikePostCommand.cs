@@ -5,38 +5,38 @@ using MediatR;
 using Blogpost.Application.Common.Exceptions;
 using Blogpost.Application.Common.Interfaces;
 using Blogpost.Application.Repositories;
+using Blogpost.Domain.Entities;
 
-namespace Blogpost.Application.Posts.Commands.Unlike
+namespace Blogpost.Application.Posts.Commands.Unlike;
+
+public class UnlikePostCommand : IRequest
 {
-    public class UnlikePostCommand : IRequest
+    public Guid PostId { get; init; }
+
+    public Guid ProfileId { get; init; }
+
+    public class UnlikePostCommandHandler : AsyncRequestHandler<UnlikePostCommand>
     {
-        public Guid PostId { get; init; }
+        private readonly IApplicationDbContext _context;
+        private readonly PostsRepository _postsRepository;
 
-        public Guid ProfileId { get; init; }
-
-        public class UnlikePostCommandHandler : AsyncRequestHandler<UnlikePostCommand>
+        public UnlikePostCommandHandler(IApplicationDbContext context, PostsRepository postsRepository)
         {
-            private readonly IApplicationDbContext _context;
-            private readonly PostsRepository _postsRepository;
+            _context = context;
+            _postsRepository = postsRepository;
+        }
 
-            public UnlikePostCommandHandler(IApplicationDbContext context, PostsRepository postsRepository)
-            {
-                _context = context;
-                _postsRepository = postsRepository;
-            }
+        protected override async Task Handle(UnlikePostCommand request, CancellationToken cancellationToken)
+        {
+            Post post = await _postsRepository.GetPostById(request.PostId, cancellationToken);
 
-            protected override async Task Handle(UnlikePostCommand request, CancellationToken cancellationToken)
-            {
-                var post = await _postsRepository.GetPostById(request.PostId, cancellationToken);
+            Profile profile = await _context.Profiles
+                .FindAsync(new object[] { request.ProfileId }, cancellationToken);
+            if (profile == null) throw new NotFoundException("Profile", request.ProfileId);
 
-                var profile = await _context.Profiles
-                    .FindAsync(new object[] { request.ProfileId }, cancellationToken);
-                if (profile == null) throw new NotFoundException("Profile", request.ProfileId);
+            post.UnlikeFrom(profile);
 
-                post.UnlikeFrom(profile);
-
-                await _context.SaveChangesAsync(cancellationToken);
-            }
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 }

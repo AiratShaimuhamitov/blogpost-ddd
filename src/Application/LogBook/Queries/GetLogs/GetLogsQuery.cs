@@ -7,38 +7,35 @@ using MediatR;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
-namespace Blogpost.Application.LogBook.Queries.GetLogs
+namespace Blogpost.Application.LogBook.Queries.GetLogs;
+
+public class GetLogsQuery : IRequest<IEnumerable<LogDto>>
 {
-    public class GetLogsQuery : IRequest<IEnumerable<LogDto>>
+    public Guid ProfileId { get; set; }
+    public DateTime From { get; set; }
+    public DateTime To { get; set; }
+
+    public class GetLogsPerMonthQueryHandler : IRequestHandler<GetLogsQuery, IEnumerable<LogDto>>
     {
-        public Guid ProfileId { get; set; }
-        public DateTime From { get; set; }
-        public DateTime To { get; set; }
+        private readonly IConfiguration _configuration;
 
-        public class GetLogsPerMonthQueryHandler : IRequestHandler<GetLogsQuery, IEnumerable<LogDto>>
+        public GetLogsPerMonthQueryHandler(IConfiguration configuration)
         {
-            private readonly IConfiguration _configuration;
+            _configuration = configuration;
+        }
 
-            public GetLogsPerMonthQueryHandler(IConfiguration configuration)
-            {
-                _configuration = configuration;
-            }
+        public async Task<IEnumerable<LogDto>> Handle(GetLogsQuery request, CancellationToken cancellationToken)
+        {
+            string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-            public async Task<IEnumerable<LogDto>> Handle(GetLogsQuery request, CancellationToken cancellationToken)
-            {
-                var connectionString = _configuration.GetConnectionString("DefaultConnection");
-
-                await using (var db = new SqlConnection(connectionString))
-                {
-                    var logDto = await db.QueryAsync<LogDto>(
-                        @"select * from Logbooks
+            await using var db = new SqlConnection(connectionString);
+            var logDto = await db.QueryAsync<LogDto>(
+                @"select * from Logbooks
                             where ProfileId = @ProfileId
                                  and LogDate between @from and @to",
-                        new { request.ProfileId, request.From, request.To });
+                new { request.ProfileId, request.From, request.To });
 
-                    return logDto;
-                }
-            }
+            return logDto;
         }
     }
 }

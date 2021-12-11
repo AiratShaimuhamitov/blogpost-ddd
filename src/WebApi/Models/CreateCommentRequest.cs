@@ -18,103 +18,102 @@ using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
 using Newtonsoft.Json;
 
-namespace Blogpost.WebApi.Models
+namespace Blogpost.WebApi.Models;
+
+/// <summary>
+///
+/// </summary>
+[DataContract]
+public partial class CreateCommentRequest : IEquatable<CreateCommentRequest>
 {
     /// <summary>
-    ///
+    /// Содержание комментария
     /// </summary>
-    [DataContract]
-    public partial class CreateCommentRequest : IEquatable<CreateCommentRequest>
+    /// <value>Содержание комментария</value>
+    [DataMember(Name = "content")]
+    public string Content { get; set; }
+
+    /// <summary>
+    /// Returns the string presentation of the object
+    /// </summary>
+    /// <returns>String presentation of the object</returns>
+    public override string ToString()
     {
-        /// <summary>
-        /// Содержание комментария
-        /// </summary>
-        /// <value>Содержание комментария</value>
-        [DataMember(Name = "content")]
-        public string Content { get; set; }
+        var sb = new StringBuilder();
+        sb.Append("class CreateCommentRequest {\n");
+        sb.Append("  Content: ").Append(Content).Append("\n");
+        sb.Append("}\n");
+        return sb.ToString();
+    }
 
-        /// <summary>
-        /// Returns the string presentation of the object
-        /// </summary>
-        /// <returns>String presentation of the object</returns>
-        public override string ToString()
+    /// <summary>
+    /// Returns the JSON string presentation of the object
+    /// </summary>
+    /// <returns>JSON string presentation of the object</returns>
+    public string ToJson()
+    {
+        return JsonConvert.SerializeObject(this, Formatting.Indented);
+    }
+
+    /// <summary>
+    /// Returns true if objects are equal
+    /// </summary>
+    /// <param name="obj">Object to be compared</param>
+    /// <returns>Boolean</returns>
+    public override bool Equals(object obj)
+    {
+        if (ReferenceEquals(null, obj)) return false;
+        if (ReferenceEquals(this, obj)) return true;
+        return obj.GetType() == GetType() && Equals((CreateCommentRequest)obj);
+    }
+
+    /// <summary>
+    /// Returns true if CreateCommentRequest instances are equal
+    /// </summary>
+    /// <param name="other">Instance of CreateCommentRequest to be compared</param>
+    /// <returns>Boolean</returns>
+    public bool Equals(CreateCommentRequest other)
+    {
+        if (ReferenceEquals(null, other)) return false;
+        if (ReferenceEquals(this, other)) return true;
+
+        return
+        (
+            Content == other.Content ||
+            Content != null &&
+            Content.Equals(other.Content)
+        );
+    }
+
+    /// <summary>
+    /// Gets the hash code
+    /// </summary>
+    /// <returns>Hash code</returns>
+    public override int GetHashCode()
+    {
+        unchecked // Overflow is fine, just wrap
         {
-            var sb = new StringBuilder();
-            sb.Append("class CreateCommentRequest {\n");
-            sb.Append("  Content: ").Append(Content).Append("\n");
-            sb.Append("}\n");
-            return sb.ToString();
+            var hashCode = 41;
+            // Suitable nullity checks etc, of course :)
+            if (Content != null)
+                hashCode = hashCode * 59 + Content.GetHashCode();
+            return hashCode;
         }
+    }
 
-        /// <summary>
-        /// Returns the JSON string presentation of the object
-        /// </summary>
-        /// <returns>JSON string presentation of the object</returns>
-        public string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, Formatting.Indented);
-        }
-
-        /// <summary>
-        /// Returns true if objects are equal
-        /// </summary>
-        /// <param name="obj">Object to be compared</param>
-        /// <returns>Boolean</returns>
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            return obj.GetType() == GetType() && Equals((CreateCommentRequest)obj);
-        }
-
-        /// <summary>
-        /// Returns true if CreateCommentRequest instances are equal
-        /// </summary>
-        /// <param name="other">Instance of CreateCommentRequest to be compared</param>
-        /// <returns>Boolean</returns>
-        public bool Equals(CreateCommentRequest other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-
-            return
-                (
-                    Content == other.Content ||
-                    Content != null &&
-                    Content.Equals(other.Content)
-                );
-        }
-
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
-        {
-            unchecked // Overflow is fine, just wrap
-            {
-                var hashCode = 41;
-                // Suitable nullity checks etc, of course :)
-                if (Content != null)
-                    hashCode = hashCode * 59 + Content.GetHashCode();
-                return hashCode;
-            }
-        }
-
-        #region Operators
+    #region Operators
 #pragma warning disable 1591
 
-        public static bool operator ==(CreateCommentRequest left, CreateCommentRequest right)
-        {
-            return Equals(left, right);
-        }
+    public static bool operator ==(CreateCommentRequest left, CreateCommentRequest right)
+    {
+        return Equals(left, right);
+    }
 
-        public static bool operator !=(CreateCommentRequest left, CreateCommentRequest right)
-        {
-            return !Equals(left, right);
-        }
+    public static bool operator !=(CreateCommentRequest left, CreateCommentRequest right)
+    {
+        return !Equals(left, right);
+    }
 
 #pragma warning restore 1591
-        #endregion Operators
-    }
+    #endregion Operators
 }

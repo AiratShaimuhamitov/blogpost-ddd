@@ -5,19 +5,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Blogpost.Domain.Entities;
 
-namespace Blogpost.Application.Common.Interfaces
+namespace Blogpost.Application.Common.Interfaces;
+
+public interface IApplicationDbContext
 {
-    public interface IApplicationDbContext
-    {
-        DbSet<Profile> Profiles { get; set; }
+    DbSet<Profile> Profiles { get; set; }
 
-        DbSet<Post> Posts { get; set; }
+    DbSet<Post> Posts { get; set; }
 
-        DbSet<Comment> Comments { get; set; }
-        DbSet<Logbook> Logbooks { get; set; }
+    DbSet<Comment> Comments { get; set; }
+    DbSet<Logbook> Logbooks { get; set; }
 
-        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 
-        EntityEntry<TEntity> Entry<TEntity>([NotNull] TEntity entity) where TEntity : class;
-    }
+    EntityEntry<TEntity> Entry<TEntity>([NotNull] TEntity entity) where TEntity : class;
 }
